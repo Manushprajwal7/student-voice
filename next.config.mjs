@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "standalone",
   // Enabling experimental features
   experimental: {
     serverComponentsExternalPackages: ["mongoose"], // Allowing mongoose for server components

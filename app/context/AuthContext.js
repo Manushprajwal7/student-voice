@@ -1,3 +1,4 @@
+// File: app/context/AuthContext.js
 "use client";
 import { createContext, useContext, useEffect, useState } from "react";
 import {
@@ -16,18 +17,28 @@ export const AuthContextProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // List of admin emails - Replace with actual admin emails
+  const adminEmails = [
+    "admin@college.edu",
+    "dean@college.edu",
+    "manushprajwal1@gmail.com",
+  ];
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const token = await firebaseUser.getIdToken();
+        const isAdmin = adminEmails.includes(firebaseUser.email);
         const userData = {
           uid: firebaseUser.uid,
           email: firebaseUser.email,
           displayName: firebaseUser.displayName,
           photoURL: firebaseUser.photoURL,
           token: token,
+          isAdmin: isAdmin,
         };
         setUser(userData);
+        console.log("User data:", userData); // Debugging: Check user details
         localStorage.setItem("user", JSON.stringify(userData));
       } else {
         setUser(null);

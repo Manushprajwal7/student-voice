@@ -1,4 +1,4 @@
-// File: app/page.js
+// app/page.js
 "use client";
 import React, { useEffect, useState } from "react";
 import Feed from "../components/Feed";
@@ -43,10 +43,17 @@ export default function Home() {
     loadIssues();
   }, [user]);
 
-  const filteredIssues =
-    category && category !== "All"
-      ? issues.filter((issue) => issue.category === category)
-      : issues;
+  let filteredIssues;
+  if (user && user.isAdmin) {
+    // Show all issues for admins
+    filteredIssues = issues;
+  } else {
+    // Filter issues by category for normal users
+    filteredIssues =
+      category && category !== "All"
+        ? issues.filter((issue) => issue.category === category)
+        : issues;
+  }
 
   if (loading) {
     return (

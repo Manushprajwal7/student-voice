@@ -1,9 +1,9 @@
-// utils/firebase-admin.js
-
+// File: utils/firebase-admin.js
 import { initializeApp, getApps, cert } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 
-const firebaseConfig = {
+// Firebase Admin configuration using environment variables
+const firebaseAdminConfig = {
   type: process.env.FIREBASE_TYPE,
   project_id: process.env.FIREBASE_PROJECT_ID,
   private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
@@ -16,17 +16,23 @@ const firebaseConfig = {
   client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL,
 };
 
+let firebaseApp;
+
 export function initializeFirebaseAdmin() {
   if (!getApps().length) {
     try {
-      initializeApp({
-        credential: cert(firebaseConfig),
+      firebaseApp = initializeApp({
+        credential: cert(firebaseAdminConfig),
       });
-      console.log("Firebase Admin initialized successfully.");
+      console.log("Firebase Admin initialized successfully");
     } catch (error) {
-      console.error("Failed to initialize Firebase Admin SDK:", error);
+      console.error("Error initializing Firebase Admin:", error);
+      throw error;
     }
+  } else {
+    firebaseApp = getApps()[0];
   }
+  return firebaseApp;
 }
 
 export { getAuth };

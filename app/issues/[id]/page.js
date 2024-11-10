@@ -1,7 +1,8 @@
+// File: app/issues/[id]/page.js
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
 import Image from "next/image";
 
@@ -9,7 +10,10 @@ export default function IssuePage() {
   const [issue, setIssue] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isResolving, setIsResolving] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const params = useParams();
+  const router = useRouter();
   const { id } = params;
   const { user } = useAuth();
 
@@ -23,7 +27,7 @@ export default function IssuePage() {
     try {
       const response = await fetch(`/api/issues/${id}`, {
         headers: {
-          Authorization: `Bearer ${user.token}`,
+          Authorization: `Bearer ${user?.token}`, // Include token if available
         },
       });
       if (!response.ok) {
@@ -36,6 +40,40 @@ export default function IssuePage() {
       console.error("Error fetching issue:", err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const resolveIssue = async () => {
+    if (!user?.token) {
+      setError("You must be logged in to resolve issues");
+      return;
+    }
+
+    setIsResolving(true);
+    try {
+      const response = await fetch(`/api/issues/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+        body: JSON.stringify({ status: "resolved" }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to resolve issue");
+      }
+
+      setShowConfirmation(true);
+      setTimeout(() => {
+        router.push("/");
+      }, 2000);
+    } catch (error) {
+      console.error("Error resolving issue:", error);
+      setError(error.message);
+    } finally {
+      setIsResolving(false);
     }
   };
 
@@ -69,7 +107,16 @@ export default function IssuePage() {
         </div>
       </div>
       <h1 className="text-3xl font-bold mb-4">{issue.prompt}</h1>
-      <p className="text-gray-600 mb-4">Status: {issue.status}</p>
+      <p className="text-gray-600 mb-4">
+        Status:
+        <span
+          className={`${
+            issue.status === "resolved" ? "text-green-600" : "text-blue-600"
+          } ml-2`}
+        >
+          {issue.status}
+        </span>
+      </p>
       <p className="text-gray-600 mb-4">
         Category: {issue.category || "Uncategorized"}
       </p>
@@ -89,6 +136,34 @@ export default function IssuePage() {
           ))}
         </div>
       </div>
+
+      {/* Resolve Button for Admins */}
+      {user?.isAdmin && issue.status !== "resolved" && (
+        <button
+          onClick={resolveIssue}
+          disabled={isResolving}
+          className={`mt-8 px-6 py-2 bg-green-600 text-white rounded-lg 
+            ${
+              isResolving
+                ? "opacity-50 cursor-not-allowed"
+                : "hover:bg-green-700"
+            }
+            transition duration-200`}
+        >
+          {isResolving ? "Resolving..." : "Resolve this issue"}
+        </button>
+      )}
+
+      {showConfirmation && (
+        <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl">
+            <p className="text-green-600 font-semibold text-lg">
+              Issue resolved successfully!
+            </p>
+            <p className="text-gray-600 mt-2">Redirecting to homepage...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

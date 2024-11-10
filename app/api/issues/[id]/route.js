@@ -1,16 +1,27 @@
+// File: app/api/issues/[id]/route.js
 import { NextResponse } from "next/server";
 import dbConnect from "../../../lib/dbConnect";
 import Issue from "../../../../models/Issue";
+import {
+  initializeFirebaseAdmin,
+  getAuth,
+} from "../../../../utils/firebase-admin";
+
+// Initialize Firebase Admin at the top level
+try {
+  initializeFirebaseAdmin();
+} catch (error) {
+  console.error("Failed to initialize Firebase Admin:", error);
+}
 
 export async function GET(request, { params }) {
   const { id } = params;
 
   try {
     await dbConnect();
-    const issue = await Issue.findById(id).populate("creator");
+    const issue = await Issue.findById(id);
 
     if (!issue) {
-      console.error(`Issue with ID ${id} not found.`);
       return NextResponse.json(
         { success: false, error: "Issue not found" },
         { status: 404 }
@@ -29,55 +40,80 @@ export async function GET(request, { params }) {
 
 export async function PATCH(request, { params }) {
   const { id } = params;
-  const { prompt, tag } = await request.json();
+  const authHeader = request.headers.get("authorization");
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+
+  const token = authHeader.split("Bearer ")[1];
 
   try {
-    await dbConnect();
+    const auth = getAuth();
+    const decodedToken = await auth.verifyIdToken(token);
 
+    await dbConnect();
     const existingIssue = await Issue.findById(id);
+
     if (!existingIssue) {
-      console.error(`Issue with ID ${id} not found for update.`);
       return NextResponse.json(
         { success: false, error: "Issue not found" },
         { status: 404 }
       );
     }
 
-    existingIssue.prompt = prompt;
-    existingIssue.tag = tag;
-    await existingIssue.save();
+    const updates = await request.json();
+    const updatedIssue = await Issue.findByIdAndUpdate(
+      id,
+      { status: updates.status, updatedAt: new Date() },
+      { new: true }
+    );
 
-    console.log(`Issue with ID ${id} updated successfully.`);
     return NextResponse.json({
       success: true,
       message: "Issue updated successfully",
+      data: updatedIssue,
     });
   } catch (error) {
     console.error("Error updating issue:", error);
     return NextResponse.json(
-      { success: false, error: "Error updating issue" },
+      { success: false, error: "Error updating issue: " + error.message },
       { status: 500 }
     );
   }
 }
 
+// Adding the DELETE function to handle DELETE requests
 export async function DELETE(request, { params }) {
   const { id } = params;
+  const authHeader = request.headers.get("authorization");
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+
+  const token = authHeader.split("Bearer ")[1];
 
   try {
-    await dbConnect();
+    const auth = getAuth();
+    const decodedToken = await auth.verifyIdToken(token);
 
+    await dbConnect();
     const deletedIssue = await Issue.findByIdAndDelete(id);
 
     if (!deletedIssue) {
-      console.error(`Issue with ID ${id} not found for deletion.`);
       return NextResponse.json(
         { success: false, error: "Issue not found" },
         { status: 404 }
       );
     }
 
-    console.log(`Issue with ID ${id} deleted successfully.`);
     return NextResponse.json({
       success: true,
       message: "Issue deleted successfully",
@@ -85,7 +121,7 @@ export async function DELETE(request, { params }) {
   } catch (error) {
     console.error("Error deleting issue:", error);
     return NextResponse.json(
-      { success: false, error: "Error deleting issue" },
+      { success: false, error: "Error deleting issue: " + error.message },
       { status: 500 }
     );
   }

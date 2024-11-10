@@ -9,7 +9,7 @@ import { useSearchParams } from "next/navigation";
 const Feed = () => {
   const [posts, setPosts] = useState([]);
   const [filteredPosts, setFilteredPosts] = useState([]);
-  const [searchQuery, setSearchQuery] = useState(""); // State for search input
+  const [searchQuery, setSearchQuery] = useState("");
   const { user, loading } = useAuth();
   const searchParams = useSearchParams();
   const category = searchParams.get("category");
@@ -20,6 +20,7 @@ const Feed = () => {
         const response = await fetch("/api/issues", {
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${user?.token}`,
           },
         });
 
@@ -34,18 +35,20 @@ const Feed = () => {
       }
     }
 
-    fetchAllIssues();
-  }, []);
+    if (user) {
+      fetchAllIssues();
+    }
+  }, [user]);
 
   useEffect(() => {
     filterPosts();
-  }, [category, posts, searchQuery]); // Re-run filter on category, posts, or search query change
+  }, [category, posts, searchQuery]);
 
   const filterPosts = () => {
     let filtered = posts;
 
-    // Filter by category if selected
-    if (category && category !== "All") {
+    // For non-admin users, filter by category
+    if (!user?.isAdmin && category && category !== "All") {
       filtered = filtered.filter((post) => post.category === category);
     }
 
@@ -53,9 +56,7 @@ const Feed = () => {
     if (searchQuery) {
       const regex = new RegExp(searchQuery, "i");
       filtered = filtered.filter(
-        (post) =>
-          regex.test(post.creator?.username) || // Search by username
-          regex.test(post.tag) // Search by tags
+        (post) => regex.test(post.creator?.username) || regex.test(post.tag)
       );
     }
 
@@ -63,16 +64,17 @@ const Feed = () => {
   };
 
   const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value); // Update search query state
+    setSearchQuery(e.target.value);
   };
 
   if (loading) return <div>Loading...</div>;
 
   return (
     <section className="w-full max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-xl sm:text-2xl font-bold mb-6">Recent Issues</h1>
+      <h1 className="text-xl sm:text-2xl font-bold mb-6">
+        {user?.isAdmin ? "All Issues (Admin View)" : "Recent Issues"}
+      </h1>
 
-      {/* Search Bar */}
       <form className="mb-8">
         <input
           type="text"

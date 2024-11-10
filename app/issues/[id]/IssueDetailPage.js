@@ -1,15 +1,17 @@
-// File: app/issues/[id]/page.js
+// File: app/issues/[id]/IssueDetailsPage.js
 "use client";
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useAuth } from "../../context/AuthContext";
 
-export default function IssuePage() {
+export default function IssueDetailsPage() {
   const [issue, setIssue] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const params = useParams();
   const { id } = params;
+  const { user } = useAuth();
 
   useEffect(() => {
     if (id) {
@@ -40,30 +42,27 @@ export default function IssuePage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 mt-20">
-      {issue.creator && (
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-2">Created by:</h2>
-          <p>{issue.creator.username}</p>
-          <p>{issue.creator.email}</p>
-        </div>
-      )}
-      <h3 className="text-3xl font-bold mb-4">{issue.prompt}</h3>
-      <p className="text-gray-600 mb-4">Status: {issue.status}</p>
-      <p className="text-gray-600 mb-4">
-        Created at: {new Date(issue.createdAt).toLocaleString()}
-      </p>
-      <div className="mt-4">
-        <h2 className="text-xl font-semibold mb-2">Tags:</h2>
-        <div className="flex flex-wrap gap-2">
-          {issue.tag.split(",").map((tag, index) => (
-            <span
-              key={index}
-              className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm"
-            >
-              #{tag.trim()}
-            </span>
-          ))}
-        </div>
+      <h1 className="text-3xl font-bold mb-4">{issue.prompt}</h1>
+      <div className="bg-gray-100 p-4 rounded-lg mb-6">
+        <p className="text-gray-700">
+          <span className="font-semibold">Status:</span>{" "}
+          <span
+            className={`${
+              issue.status === "resolved" ? "text-green-600" : "text-blue-600"
+            }`}
+          >
+            {issue.status}
+          </span>
+        </p>
+        <p className="text-gray-700">
+          <span className="font-semibold">Category:</span> {issue.category}
+        </p>
+        <p className="text-gray-700">
+          <span className="font-semibold">Created by:</span> {issue.creatorName}
+        </p>
+        <p className="text-gray-700">
+          <span className="font-semibold">Email:</span> {issue.creatorEmail}
+        </p>
       </div>
     </div>
   );
