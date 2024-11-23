@@ -1,8 +1,7 @@
-// File: utils/firebase-admin.js
+// utils/firebase-admin.js
 import { initializeApp, getApps, cert } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 
-// Firebase Admin configuration using environment variables
 const firebaseAdminConfig = {
   type: process.env.FIREBASE_TYPE,
   project_id: process.env.FIREBASE_PROJECT_ID,

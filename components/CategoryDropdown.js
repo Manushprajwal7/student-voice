@@ -1,4 +1,4 @@
-// File: components/CategoryDropdown.js
+// components/CategoryDropdown.js
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -23,10 +23,14 @@ const CategoryDropdown = () => {
 
   const handleCategorySelect = (category) => {
     setIsOpen(false);
-    if (category === "All") {
-      router.push("/");
-    } else {
-      router.push(`/?category=${encodeURIComponent(category)}`);
+    try {
+      if (category === "All") {
+        router.push("/");
+      } else {
+        router.push(`/?category=${encodeURIComponent(category)}`);
+      }
+    } catch (error) {
+      console.error("Routing error:", error);
     }
   };
 

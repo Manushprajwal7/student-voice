@@ -25,9 +25,9 @@ const ProblemCard = ({ problem, currentUser }) => {
 
   return (
     <Link href={`/issues/${problem._id}`} className="block">
-      <div className={`rounded-xl shadow-md p-6 ${cardStyle}`}>
-        <div className="flex items-start justify-between mb-3 w-full">
-          <div className="flex items-start space-x-3 min-w-0 flex-1">
+      <div className={`rounded-xl shadow-md p-3 ${cardStyle}`}>
+        <div className="flex items-start justify-between mb-2 w-full">
+          <div className="flex items-start space-x-2 min-w-0 flex-1">
             <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg overflow-hidden">
               {problem.creatorImage ? (
                 <Image

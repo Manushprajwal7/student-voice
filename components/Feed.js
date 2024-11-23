@@ -1,4 +1,5 @@
-// File: components/Feed.js
+// components/Feed.js
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -47,8 +48,8 @@ const Feed = () => {
   const filterPosts = () => {
     let filtered = posts;
 
-    // For non-admin users, filter by category
-    if (!user?.isAdmin && category && category !== "All") {
+    // Apply category filter regardless of admin status
+    if (category && category !== "All") {
       filtered = filtered.filter((post) => post.category === category);
     }
 

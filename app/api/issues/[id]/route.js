@@ -1,4 +1,4 @@
-// File: app/api/issues/[id]/route.js
+// app/api/issues/[id]/route.js
 import { NextResponse } from "next/server";
 import dbConnect from "../../../lib/dbConnect";
 import Issue from "../../../../models/Issue";
@@ -7,12 +7,7 @@ import {
   getAuth,
 } from "../../../../utils/firebase-admin";
 
-// Initialize Firebase Admin at the top level
-try {
-  initializeFirebaseAdmin();
-} catch (error) {
-  console.error("Failed to initialize Firebase Admin:", error);
-}
+initializeFirebaseAdmin();
 
 export async function GET(request, { params }) {
   const { id } = params;
@@ -53,24 +48,22 @@ export async function PATCH(request, { params }) {
 
   try {
     const auth = getAuth();
-    const decodedToken = await auth.verifyIdToken(token);
+    await auth.verifyIdToken(token);
 
     await dbConnect();
-    const existingIssue = await Issue.findById(id);
-
-    if (!existingIssue) {
-      return NextResponse.json(
-        { success: false, error: "Issue not found" },
-        { status: 404 }
-      );
-    }
-
     const updates = await request.json();
     const updatedIssue = await Issue.findByIdAndUpdate(
       id,
       { status: updates.status, updatedAt: new Date() },
       { new: true }
     );
+
+    if (!updatedIssue) {
+      return NextResponse.json(
+        { success: false, error: "Issue not found" },
+        { status: 404 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
@@ -86,7 +79,6 @@ export async function PATCH(request, { params }) {
   }
 }
 
-// Adding the DELETE function to handle DELETE requests
 export async function DELETE(request, { params }) {
   const { id } = params;
   const authHeader = request.headers.get("authorization");
@@ -102,7 +94,7 @@ export async function DELETE(request, { params }) {
 
   try {
     const auth = getAuth();
-    const decodedToken = await auth.verifyIdToken(token);
+    await auth.verifyIdToken(token);
 
     await dbConnect();
     const deletedIssue = await Issue.findByIdAndDelete(id);

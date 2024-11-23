@@ -1,17 +1,37 @@
-import { MongoClient } from "mongodb";
+// lib/mongodb.js
+import mongoose from "mongoose";
 
-if (!process.env.MONGODB_URI) {
-  throw new Error('Invalid/Missing environment variable: "MONGODB_URI"');
+const MONGODB_URI = process.env.MONGODB_URI;
+const DB_NAME = "studentVoice";
+
+if (!MONGODB_URI) {
+  throw new Error(
+    "Please define the MONGODB_URI environment variable inside .env.local"
+  );
 }
 
-const uri = process.env.MONGODB_URI;
-const options = {};
+let cached = global.mongoose;
 
-let clientPromise;
-
-if (!clientPromise) {
-  const client = new MongoClient(uri, options);
-  clientPromise = client.connect();
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
 }
 
-export default clientPromise;
+async function dbConnect() {
+  if (cached.conn) {
+    return cached.conn;
+  }
+
+  if (!cached.promise) {
+    cached.promise = mongoose
+      .connect(MONGODB_URI, {
+        dbName: DB_NAME, // Ensure database name is consistent
+      })
+      .then((mongoose) => {
+        return mongoose;
+      });
+  }
+  cached.conn = await cached.promise;
+  return cached.conn;
+}
+
+export default dbConnect;

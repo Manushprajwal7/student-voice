@@ -78,29 +78,31 @@ export default function Home() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-4 pt-10 sm:p-24 ">
-      <section className="w-full max-w-4xl mx-auto px-4 py-8 pt-10 sm:py-12 text-center">
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">
-          <span className="text-black mt-3 pt-8">Student Voice</span>
-          <br className="hidden sm:block" />
-          <span className="text-black">College Community Concerns</span>
-        </h1>
-        <p className="text-lg sm:text-xl text-gray-600 mb-8 sm:mb-12 max-w-2xl mx-auto">
-          Explore issues raised by students in our college community. Voice your
-          support and make a difference.
-        </p>
+    <main className="flex flex-col items-center justify-center min-h-screen py-8 px-4 lg:py-16 lg:px-8">
+      <section className="w-full max-w-4xl mx-auto p:4">
+        <div className="bg-gray-100 rounded-lg shadow-lg p-6 md:p-10">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+            <span className="text-black">Student Voice</span>
+            <br className="hidden md:block" />
+            <span className="text-black">College Community Concerns</span>
+          </h1>
+          <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl">
+            Explore issues raised by students in our college community. Voice
+            your support and make a difference.
+          </p>
 
-        {user ? (
-          <Feed initialIssues={filteredIssues} />
-        ) : (
-          <div
-            className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-8"
-            role="alert"
-          >
-            <p className="font-bold">Please log in</p>
-            <p>You need to be logged in to view and interact with issues.</p>
-          </div>
-        )}
+          {user ? (
+            <Feed initialIssues={filteredIssues} />
+          ) : (
+            <div
+              className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-8"
+              role="alert"
+            >
+              <p className="font-bold">Please log in</p>
+              <p>You need to be logged in to view and interact with issues.</p>
+            </div>
+          )}
+        </div>
       </section>
     </main>
   );
