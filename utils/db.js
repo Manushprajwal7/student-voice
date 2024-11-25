@@ -1,6 +1,8 @@
 // utils/db.js
 import mongoose from "mongoose";
 
+const DB_NAME = "studentvoice"; // Consistent database name
+
 let isConnected = false;
 
 export const connectToDB = async () => {
@@ -11,7 +13,7 @@ export const connectToDB = async () => {
 
   try {
     await mongoose.connect(process.env.MONGODB_URI, {
-      dbName: "studentvoice",
+      dbName: DB_NAME,
     });
 
     isConnected = true;
@@ -20,3 +22,4 @@ export const connectToDB = async () => {
     console.error("Error connecting to MongoDB:", error);
   }
 };
+L;

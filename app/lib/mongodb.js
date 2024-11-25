@@ -2,7 +2,7 @@
 import mongoose from "mongoose";
 
 const MONGODB_URI = process.env.MONGODB_URI;
-const DB_NAME = "studentvoice"; // Use lowercase consistently
+const DB_NAME = "studentvoice"; // Standardized lowercase database name
 
 if (!MONGODB_URI) {
   throw new Error(
@@ -24,7 +24,7 @@ async function dbConnect() {
   if (!cached.promise) {
     cached.promise = mongoose
       .connect(MONGODB_URI, {
-        dbName: DB_NAME, // Ensure database name is consistent
+        dbName: DB_NAME, // Consistent database name
       })
       .then((mongoose) => {
         return mongoose;
