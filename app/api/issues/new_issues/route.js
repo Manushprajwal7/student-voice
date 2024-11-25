@@ -1,4 +1,5 @@
 // app/api/issues/new_issues/route.js
+"use client";
 import { connectToDB } from "../../../../utils/db";
 import Issue from "../../../../models/Issue";
 import {

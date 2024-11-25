@@ -1,3 +1,4 @@
+"use client";
 import { connectToDB } from "../../../../../utils/db";
 import Post from "../../../../../models/post";
 
