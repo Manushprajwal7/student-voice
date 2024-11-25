@@ -1,3 +1,4 @@
+"use client";
 import dbConnect from "../../lib/dbConnect";
 import Issue from "../../../models/Issue";
 
