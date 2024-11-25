@@ -1,510 +1,4 @@
-// File: components/CategoryDropdown.js
-// components/CategoryDropdown.js
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 
-const categories = [
-  "All",
-  "Teaching",
-  "Women Rights",
-  "Ragging",
-  "Cultural Events",
-  "Campus",
-  "Sports",
-  "Fest",
-  "Infrastructure",
-  "Academics",
-  "Student Services",
-  "Extracurricular Activities",
-];
-
-const CategoryDropdown = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const router = useRouter();
-
-  const handleCategorySelect = (category) => {
-    setIsOpen(false);
-    try {
-      if (category === "All") {
-        router.push("/");
-      } else {
-        router.push(`/?category=${encodeURIComponent(category)}`);
-      }
-    } catch (error) {
-      console.error("Routing error:", error);
-    }
-  };
-
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="px-4 py-2 bg-gray-200 rounded-md focus:outline-none"
-      >
-        Categories
-      </button>
-      {isOpen && (
-        <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-10">
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => handleCategorySelect(category)}
-              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-            >
-              {category}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default CategoryDropdown;
-
-// File: components/Feed.js
-// File: components/Feed.js
-"use client";
-
-import React, { useState, useEffect } from "react";
-import ProblemCard from "./ProblemCard";
-import { useAuth } from "../app/context/AuthContext";
-import { useSearchParams } from "next/navigation";
-
-const Feed = () => {
-  const [posts, setPosts] = useState([]);
-  const [filteredPosts, setFilteredPosts] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const { user, loading } = useAuth();
-  const searchParams = useSearchParams();
-  const category = searchParams.get("category");
-
-  useEffect(() => {
-    async function fetchAllIssues() {
-      try {
-        const response = await fetch("/api/issues", {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${user?.token}`,
-          },
-        });
-
-        if (response.ok) {
-          const issues = await response.json();
-          setPosts(issues);
-        } else {
-          throw new Error("Failed to fetch issues");
-        }
-      } catch (error) {
-        console.error("Error fetching issues:", error);
-      }
-    }
-
-    if (user) {
-      fetchAllIssues();
-    }
-  }, [user]);
-
-  useEffect(() => {
-    filterPosts();
-  }, [category, posts, searchQuery]);
-
-  const filterPosts = () => {
-    let filtered = posts;
-
-    // For non-admin users, filter by category
-    if (!user?.isAdmin && category && category !== "All") {
-      filtered = filtered.filter((post) => post.category === category);
-    }
-
-    // Filter by search query (username or tag)
-    if (searchQuery) {
-      const regex = new RegExp(searchQuery, "i");
-      filtered = filtered.filter(
-        (post) => regex.test(post.creator?.username) || regex.test(post.tag)
-      );
-    }
-
-    setFilteredPosts(filtered);
-  };
-
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-  };
-
-  if (loading) return <div>Loading...</div>;
-
-  return (
-    <section className="w-full max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-xl sm:text-2xl font-bold mb-6">
-        {user?.isAdmin ? "All Issues (Admin View)" : "Recent Issues"}
-      </h1>
-
-      <form className="mb-8">
-        <input
-          type="text"
-          placeholder="Search by username or tags"
-          value={searchQuery}
-          onChange={handleSearchChange}
-          className="w-full px-3 py-2 sm:px-4 sm:py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </form>
-
-      <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {filteredPosts.map((issue) => (
-          <ProblemCard key={issue._id} problem={issue} currentUser={user} />
-        ))}
-      </div>
-    </section>
-  );
-};
-
-export default Feed;
-
-// File: components/Form.js
-"use client";
-import Link from "next/link";
-import PropTypes from "prop-types";
-
-const Form = ({ type, post, setPost, submitting, handleSubmit }) => {
-  async function createIssue(userId, prompt, tag) {
-    // Validate userId format
-    if (
-      typeof userId !== "string" ||
-      userId.length !== 24 ||
-      !/^[a-fA-F0-9]{24}$/.test(userId)
-    ) {
-      console.error("Invalid userId format:", userId);
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/issues/new_issues", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ userId, prompt, tag }),
-      });
-
-      if (!response.ok) {
-        const errorMessage = await response.text();
-        throw new Error(`Error creating issue: ${errorMessage}`);
-      }
-
-      const result = await response.json();
-      console.log("Issue created successfully:", result);
-    } catch (error) {
-      console.error("Error creating issue:", error);
-    }
-  }
-
-  return (
-    <section className="w-full max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-2 text-left">
-        {type} Issue
-      </h1>
-      <p className="text-gray-600 mb-8 text-left">
-        {type} and share your concerns with the college, and let your concern
-        reach everyone on this platform.
-      </p>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label
-            htmlFor="concern"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Your Concern
-          </label>
-          <textarea
-            id="concern"
-            value={post?.prompt || ""}
-            onChange={(e) => setPost({ ...post, prompt: e.target.value })}
-            placeholder="Describe your concern here"
-            required
-            className="w-full h-40 px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
-          />
-        </div>
-
-        <div>
-          <label
-            htmlFor="tags"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Tags{" "}
-            <span className="text-gray-500">
-              (e.g., #TOCE, #Culturals, #Sports)
-            </span>
-          </label>
-          <input
-            id="tags"
-            value={post?.tag || ""}
-            onChange={(e) => setPost({ ...post, tag: e.target.value })}
-            type="text"
-            placeholder="#Tag"
-            required
-            className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
-          />
-        </div>
-
-        <div className="flex justify-end space-x-4">
-          <Link
-            href="/"
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 text-sm"
-          >
-            Cancel
-          </Link>
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 text-sm"
-          >
-            {submitting ? `${type}ing...` : type}
-          </button>
-        </div>
-      </form>
-    </section>
-  );
-};
-
-Form.propTypes = {
-  type: PropTypes.string.isRequired,
-  post: PropTypes.shape({
-    prompt: PropTypes.string,
-    tag: PropTypes.string,
-  }),
-  setPost: PropTypes.func.isRequired,
-  submitting: PropTypes.bool.isRequired,
-  handleSubmit: PropTypes.func.isRequired,
-};
-
-export default Form;
-
-// File: components/Navigation.js
-"use client";
-import Link from "next/link";
-import Image from "next/image";
-import { useState } from "react";
-import { useAuth } from "../app/context/AuthContext";
-import CategoryDropdown from "./CategoryDropdown";
-
-const Navigation = () => {
-  const [toggleDropdown, setToggleDropdown] = useState(false);
-  const { user, googleSignIn, logOut } = useAuth();
-
-  const handleSignIn = async () => {
-    try {
-      await googleSignIn();
-    } catch (error) {
-      console.log("Error during sign in:", error);
-    }
-  };
-
-  const handleSignOut = async () => {
-    try {
-      await logOut();
-    } catch (error) {
-      console.log("Error during sign out:", error);
-    }
-  };
-
-  return (
-    <nav className="fixed top-0 left-0 w-full bg-white shadow-md z-50 px-4 py-3 flex justify-between items-center">
-      <Link href="/" className="flex items-center space-x-2">
-        <Image
-          src="/assets/logo.svg"
-          alt="Student Voice logo"
-          width={39}
-          height={39}
-          className="w-8 h-8 sm:w-10 sm:h-10"
-        />
-        {/* Updated text visibility and size for different screen sizes */}
-        <p className="block font-sans font-semibold text-sm text-gray-800 sm:text-lg">
-          Student Voice
-        </p>
-      </Link>
-
-      <div className="flex items-center space-x-2 sm:space-x-4">
-        <CategoryDropdown /> {/* Add this line */}
-        {user ? (
-          <>
-            <Link
-              href="/issues"
-              className="rounded-full bg-blue-600 px-3 py-1 sm:px-4 sm:py-2 text-white text-xs sm:text-sm font-medium transition-colors hover:bg-blue-700"
-            >
-              Log an Issue
-            </Link>
-
-            <div className="relative">
-              <Image
-                src={user.photoURL || "/assets/default-profile.svg"}
-                width={32}
-                height={32}
-                className="rounded-full cursor-pointer sm:w-10 sm:h-10"
-                alt="User Profile"
-                onClick={() => setToggleDropdown((prev) => !prev)}
-              />
-              {toggleDropdown && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1">
-                  <Link
-                    href="/profile"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => setToggleDropdown(false)}
-                  >
-                    My Profile
-                  </Link>
-                  <button
-                    onClick={() => {
-                      setToggleDropdown(false);
-                      handleSignOut();
-                    }}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Sign Out
-                  </button>
-                </div>
-              )}
-            </div>
-          </>
-        ) : (
-          <button
-            type="button"
-            onClick={handleSignIn}
-            className="rounded-full bg-blue-600 px-3 py-1 sm:px-4 sm:py-2 text-white text-xs sm:text-sm font-medium transition-colors hover:bg-blue-700"
-          >
-            Sign in With Google
-          </button>
-        )}
-      </div>
-    </nav>
-  );
-};
-
-export default Navigation;
-
-// File: components/ProblemCard.js
-import React from "react";
-import Link from "next/link";
-import Image from "next/image";
-
-const ProblemCard = ({ problem, currentUser }) => {
-  const cardStyle = problem.status === "resolved" ? "bg-green-100" : "bg-white";
-
-  const truncateText = (text, limit) => {
-    const words = text.split(" ");
-    return words.length > limit
-      ? words.slice(0, limit).join(" ") + "..."
-      : text;
-  };
-
-  if (!problem || !problem._id) {
-    return (
-      <div className="text-red-500 font-semibold">
-        Error: Problem data is missing
-      </div>
-    );
-  }
-
-  const creatorName = problem.creatorName || "Anonymous";
-  const creatorEmail = problem.creatorEmail || "No email";
-
-  return (
-    <Link href={`/issues/${problem._id}`} className="block">
-      <div className={`rounded-xl shadow-md p-3 ${cardStyle}`}>
-        <div className="flex items-start justify-between mb-2 w-full">
-          <div className="flex items-start space-x-2 min-w-0 flex-1">
-            <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg overflow-hidden">
-              {problem.creatorImage ? (
-                <Image
-                  src={problem.creatorImage}
-                  alt={creatorName}
-                  width={48}
-                  height={48}
-                  className="object-cover"
-                />
-              ) : (
-                creatorName.charAt(0).toUpperCase()
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <h3 className="text-lg font-semibold text-gray-800 truncate">
-                {creatorName}
-              </h3>
-              <p className="text-sm text-gray-500 truncate max-w-full">
-                {creatorEmail}
-              </p>
-            </div>
-          </div>
-          {problem.createdAt && (
-            <span className="text-xs text-gray-400 flex-shrink-0 ml-2">
-              {new Date(problem.createdAt).toLocaleDateString(undefined, {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </span>
-          )}
-        </div>
-
-        <p className="text-gray-600 mb-4 line-clamp-3">
-          {truncateText(problem.prompt, 30)}
-        </p>
-
-        {problem.status === "resolved" && (
-          <p className="mb-4 text-green-600 text-sm font-medium">✓ Resolved</p>
-        )}
-
-        {problem.tag && (
-          <div className="flex flex-wrap gap-2 mt-4">
-            {problem.tag.split(",").map((tag, index) => (
-              <span
-                key={index}
-                className="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-xs font-medium"
-              >
-                #{tag.trim()}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-    </Link>
-  );
-};
-
-export default ProblemCard;
-
-// File: components/Profile.js
-// components/UserProfile.js
-import { useAuth } from "../context/AuthContext";
-
-const UserProfile = () => {
-  const { user } = useAuth();
-
-  if (!user) {
-    return <div>Please sign in to view your profile.</div>;
-  }
-
-  return (
-    <div>
-      <h2>User Profile</h2>
-      <p>Name: {user.displayName || "N/A"}</p>
-      <p>Email: {user.email}</p>
-    </div>
-  );
-};
-
-export default UserProfile;
-
-// File: components/Provider.js
-"use client";
-import { SessionProvider } from "next-auth/react";
-const Provider = ({ children, session }) => {
-  return <SessionProvider session={session}>{children}</SessionProvider>;
-};
-
-export default Provider;
 
 // File: app/api/auth/[...nextauth]/route.js
 "use client";
@@ -1481,23 +975,43 @@ async function dbConnect() {
 export default dbConnect;
 
 // File: app/lib/mongodb.js
-import { MongoClient } from "mongodb";
+// lib/mongodb.js
+import mongoose from "mongoose";
 
-if (!process.env.MONGODB_URI) {
-  throw new Error('Invalid/Missing environment variable: "MONGODB_URI"');
+const MONGODB_URI = process.env.MONGODB_URI;
+const DB_NAME = "studentVoice";
+
+if (!MONGODB_URI) {
+  throw new Error(
+    "Please define the MONGODB_URI environment variable inside .env.local"
+  );
 }
 
-const uri = process.env.MONGODB_URI;
-const options = {};
+let cached = global.mongoose;
 
-let clientPromise;
-
-if (!clientPromise) {
-  const client = new MongoClient(uri, options);
-  clientPromise = client.connect();
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
 }
 
-export default clientPromise;
+async function dbConnect() {
+  if (cached.conn) {
+    return cached.conn;
+  }
+
+  if (!cached.promise) {
+    cached.promise = mongoose
+      .connect(MONGODB_URI, {
+        dbName: DB_NAME, // Ensure database name is consistent
+      })
+      .then((mongoose) => {
+        return mongoose;
+      });
+  }
+  cached.conn = await cached.promise;
+  return cached.conn;
+}
+
+export default dbConnect;
 
 // File: app/log-issues/index.js
 "use client";
@@ -1635,29 +1149,31 @@ export default function Home() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-4 pt-10 sm:p-24 ">
-      <section className="w-full max-w-4xl mx-auto px-4 py-8 pt-10 sm:py-12 text-center">
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">
-          <span className="text-black mt-3 pt-8">Student Voice</span>
-          <br className="hidden sm:block" />
-          <span className="text-black">College Community Concerns</span>
-        </h1>
-        <p className="text-lg sm:text-xl text-gray-600 mb-8 sm:mb-12 max-w-2xl mx-auto">
-          Explore issues raised by students in our college community. Voice your
-          support and make a difference.
-        </p>
+    <main className="flex flex-col items-center justify-center min-h-screen py-8 px-4 lg:py-16 lg:px-8">
+      <section className="w-full max-w-4xl mx-auto p:4">
+        <div className="bg-gray-100 rounded-lg shadow-lg p-6 md:p-10">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+            <span className="text-black">Student Voice</span>
+            <br className="hidden md:block" />
+            <span className="text-black">College Community Concerns</span>
+          </h1>
+          <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl">
+            Explore issues raised by students in our college community. Voice
+            your support and make a difference.
+          </p>
 
-        {user ? (
-          <Feed initialIssues={filteredIssues} />
-        ) : (
-          <div
-            className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-8"
-            role="alert"
-          >
-            <p className="font-bold">Please log in</p>
-            <p>You need to be logged in to view and interact with issues.</p>
-          </div>
-        )}
+          {user ? (
+            <Feed initialIssues={filteredIssues} />
+          ) : (
+            <div
+              className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-8"
+              role="alert"
+            >
+              <p className="font-bold">Please log in</p>
+              <p>You need to be logged in to view and interact with issues.</p>
+            </div>
+          )}
+        </div>
       </section>
     </main>
   );

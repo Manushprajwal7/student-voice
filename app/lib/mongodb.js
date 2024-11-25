@@ -2,7 +2,7 @@
 import mongoose from "mongoose";
 
 const MONGODB_URI = process.env.MONGODB_URI;
-const DB_NAME = "studentVoice";
+const DB_NAME = "studentvoice"; // Use lowercase consistently
 
 if (!MONGODB_URI) {
   throw new Error(

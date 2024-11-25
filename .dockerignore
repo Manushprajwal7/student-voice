@@ -1,35 +1,30 @@
-# Ignore node modules and other unnecessary files
+# Ignore dependencies
 node_modules
-npm-debug.log
-yarn-error.log
-.pnpm-debug.log
 .pnpm-store
 
-# Ignore build outputs
+# Build outputs
 .next
 out
 dist
 
-
-
-# Ignore local development files
+# IDE and OS-specific files
 .vscode/
 .idea/
 .DS_Store
 *.log
 *.swp
 
-# Ignore test files and coverage output
-coverage
+# Tests and coverage
+coverage/
 *.test.js
 *.spec.js
 *.test.ts
 *.spec.ts
 
-# Ignore git files
+# Git files
 .git
 .gitignore
 
-# Ignore Dockerfile and Docker-specific files if not needed inside the image
+# Docker-related files
 Dockerfile
 .dockerignore

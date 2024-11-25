@@ -8,7 +8,6 @@ import {
 } from "../../../../utils/firebase-admin";
 
 initializeFirebaseAdmin();
-
 export async function GET(request, { params }) {
   const { id } = params;
 
@@ -17,6 +16,7 @@ export async function GET(request, { params }) {
     const issue = await Issue.findById(id);
 
     if (!issue) {
+      console.error(`Issue not found: ${id}`); // Debugging
       return NextResponse.json(
         { success: false, error: "Issue not found" },
         { status: 404 }
@@ -25,7 +25,7 @@ export async function GET(request, { params }) {
 
     return NextResponse.json({ success: true, data: issue });
   } catch (error) {
-    console.error("Error fetching issue:", error);
+    console.error(`Error fetching issue with ID ${id}:`, error);
     return NextResponse.json(
       { success: false, error: "Error fetching issue" },
       { status: 500 }
